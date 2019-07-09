@@ -994,9 +994,9 @@ cleanup_latest () {
 # @args:  (none)
 # @deps:  load_default_config
 check_dependencies () {
-    echo
-    echo "# Testing for installed programs"
-    dependencies=( 'mysql' 'mysqldump' )
+  echo
+  echo "# Testing for installed programs"
+  dependencies=( 'mysql' 'mysqldump' )
 
   if [[ "x$CONFIG_multicore" = 'xyes' ]]; then
 
@@ -1021,26 +1021,26 @@ check_dependencies () {
     [[ "x$CONFIG_mysql_dump_compression" = 'xgzip' ]] && dependencies=("${dependencies[@]}" 'gzip' )
   fi    
 
-    if [[ "x$CONFIG_mailcontent" = 'xlog' || "x$CONFIG_mailcontent" = 'xquiet' ]]; then
-      dependencies=( "${dependencies[@]}" 'mail' )
-    elif [[ "x$CONFIG_mailcontent" = 'xfiles' ]]; then
+  if [[ "x$CONFIG_mailcontent" = 'xlog' || "x$CONFIG_mailcontent" = 'xquiet' ]]; then
+    dependencies=( "${dependencies[@]}" 'mail' )
+  elif [[ "x$CONFIG_mailcontent" = 'xfiles' ]]; then
     dependencies=( "${dependencies[@]}" 'mail' )
     if [[ "x$CONFIG_mail_use_uuencoded_attachments" != 'xyes' ]]; then
-    dependencies=( "${dependencies[@]}" 'mutt' )
+      dependencies=( "${dependencies[@]}" 'mutt' )
     fi
-    fi
+  fi
 
-    for i in "${dependencies[@]}"; do
-      printf '%s ... ' "$i"
-      if type "$i" &>/dev/null; then
-    printf 'found.\n'
-      else
-    printf 'not found. Aborting.\n';
-    let "E |= $E_missing_deps"
-    error_handler
-      fi
-    done
-    echo
+  for i in "${dependencies[@]}"; do
+    printf '%s ... ' "$i"
+    if type "$i" &>/dev/null; then
+      printf 'found.\n'
+    else
+      printf 'not found. Aborting.\n';
+      let "E |= $E_missing_deps"
+      error_handler
+    fi
+  done
+  echo
 }
 
 # @info:  Get database list and remove excluded ones.
