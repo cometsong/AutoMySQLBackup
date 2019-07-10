@@ -134,7 +134,7 @@ mail_cleanup () {
       'files')
           # Include error log if larger than zero.
           if [[ -s "$log_errfile" ]]; then
-            backupfiles=( "${backupfiles[@]}" "$log_errfile" )
+            backupfiles+=( "$log_errfile" )
             errornote="WARNING: Error Reported - "
           fi
         temp="$(mktemp "$CONFIG_backup_dir"/tmp/mail_content.XXXXXX)"
@@ -460,48 +460,51 @@ parse_configuration () {
   # OPT string for use with mysqlstatus
   opt_dbstatus=( '--status' )
 
-  [[ "${CONFIG_mysql_dump_usessl}" = "yes" ]]     && {
-    opt=( "${opt[@]}" '--ssl' )
-    mysql_opt=( "${mysql_opt[@]}" '--ssl' )
-    opt_fullschema=( "${opt_fullschema[@]}" '--ssl' )
-    opt_dbstatus=( "${opt_dbstatus[@]}" '--ssl' )
+  [[ "${CONFIG_mysql_dump_usessl}" = "yes" ]] && {
+               opt+=( '--ssl' )
+         mysql_opt+=( '--ssl' )
+    opt_fullschema+=( '--ssl' )
+      opt_dbstatus+=( '--ssl' )
   }
-  [[ "${CONFIG_mysql_dump_master_data}" ]] && (( ${CONFIG_mysql_dump_master_data} == 1 || ${CONFIG_mysql_dump_master_data} == 2 )) && { opt=( "${opt[@]}" "--master-data=${CONFIG_mysql_dump_master_data}" );}
+  [[ "${CONFIG_mysql_dump_master_data}" ]] && 
+    (( ${CONFIG_mysql_dump_master_data} == 1 || ${CONFIG_mysql_dump_master_data} == 2 )) && {
+               opt+=( "--master-data=${CONFIG_mysql_dump_master_data}" );
+  }
   [[ "${CONFIG_mysql_dump_single_transaction}" = "yes" ]]  && {
-    opt=( "${opt[@]}" '--single-transaction' )
-    opt_fullschema=( "${opt_fullschema[@]}" '--single-transaction' )
+               opt+=( '--single-transaction' )
+    opt_fullschema+=( '--single-transaction' )
   }
-  [[ "${CONFIG_mysql_dump_commcomp}" = "yes" ]]    && {
-    opt=( "${opt[@]}" '--compress' )
-    opt_fullschema=( "${opt_fullschema[@]}" '--compress' )
-    opt_dbstatus=( "${opt_dbstatus[@]}" '--compress' )
+  [[ "${CONFIG_mysql_dump_commcomp}" = "yes" ]] && {
+               opt+=( '--compress' )
+    opt_fullschema+=( '--compress' )
+      opt_dbstatus+=( '--compress' )
   }
-  [[ "${CONFIG_mysql_dump_max_allowed_packet}" ]]    && {
-    opt=( "${opt[@]}" "--max_allowed_packet=${CONFIG_mysql_dump_max_allowed_packet}" )
-    opt_fullschema=( "${opt_fullschema[@]}" "--max_allowed_packet=${CONFIG_mysql_dump_max_allowed_packet}" )
+  [[ "${CONFIG_mysql_dump_max_allowed_packet}" ]] && {
+               opt+=( "--max_allowed_packet=${CONFIG_mysql_dump_max_allowed_packet}" )
+    opt_fullschema+=( "--max_allowed_packet=${CONFIG_mysql_dump_max_allowed_packet}" )
   }
-  [[ "${CONFIG_mysql_dump_socket}" ]]      && {
-    opt=( "${opt[@]}" "--socket=${CONFIG_mysql_dump_socket}" )
-    mysql_opt=( "${mysql_opt[@]}" "--socket=${CONFIG_mysql_dump_socket}" )
-    opt_fullschema=( "${opt_fullschema[@]}" "--socket=${CONFIG_mysql_dump_socket}" )
-    opt_dbstatus=( "${opt_dbstatus[@]}" "--socket=${CONFIG_mysql_dump_socket}" )
+  [[ "${CONFIG_mysql_dump_socket}" ]] && {
+               opt+=( "--socket=${CONFIG_mysql_dump_socket}" )
+         mysql_opt+=( "--socket=${CONFIG_mysql_dump_socket}" )
+    opt_fullschema+=( "--socket=${CONFIG_mysql_dump_socket}" )
+      opt_dbstatus+=( "--socket=${CONFIG_mysql_dump_socket}" )
   }
-  [[ "${CONFIG_mysql_dump_port}" ]]      && {
-    opt=( "${opt[@]}" "--port=${CONFIG_mysql_dump_port}" )
-    mysql_opt=( "${mysql_opt[@]}" "--port=${CONFIG_mysql_dump_port}" )
-    opt_fullschema=( "${opt_fullschema[@]}" "--port=${CONFIG_mysql_dump_port}" )
-    opt_dbstatus=( "${opt_dbstatus[@]}" "--port=${CONFIG_mysql_dump_port}" )
+  [[ "${CONFIG_mysql_dump_port}" ]] && {
+               opt+=( "--port=${CONFIG_mysql_dump_port}" )
+         mysql_opt+=( "--port=${CONFIG_mysql_dump_port}" )
+    opt_fullschema+=( "--port=${CONFIG_mysql_dump_port}" )
+      opt_dbstatus+=( "--port=${CONFIG_mysql_dump_port}" )
   }
 
   # Check if CREATE DATABASE should be included in Dump
   if [[ "${CONFIG_mysql_dump_use_separate_dirs}" = "yes" ]]; then
     if [[ "${CONFIG_mysql_dump_create_database}" = "no" ]]; then
-      opt=( "${opt[@]}" '--no-create-db' )
+      opt+=( '--no-create-db' )
     else
-      opt=( "${opt[@]}" '--databases' )
+      opt+=( '--databases' )
     fi
   else
-    opt=( "${opt[@]}" '--databases' )
+    opt+=( '--databases' )
   fi
 
   # if differential backup is active and the specified rotation is smaller than 21 days, set it to 21 days to ensure, that
@@ -533,7 +536,7 @@ parse_configuration () {
 
   if ((${#CONFIG_table_exclude[@]})); then
     for i in "${CONFIG_table_exclude[@]}"; do
-      opt=( "${opt[@]}" "--ignore-table=$i" )
+      opt+=( "--ignore-table=$i" )
     done
   fi
 }
@@ -664,7 +667,7 @@ process_dbs() {
      [[ "x${CONFIG_encrypt}" != "xyes" ]] && \
      (( $activate_differential_backup ));
   then
-    unset manifest_entry manifest_entry_to_check
+    unset -v manifest_entry manifest_entry_to_check
 
     echo "## Reading in Manifest file"
     parse_manifest "$manifest_file"
@@ -815,7 +818,7 @@ process_dbs() {
     fi
     files_postprocessing "$cfname"
     tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-    backupfiles=( "${backupfiles[@]}" "${cfname}${var}" )
+    backupfiles+=( "${cfname}${var}" )
   else
     let "E |= $E_dbdump_failed"
     echo "dbdump with parameters \"${CONFIG_db_names[@]}\" \"${cfname}\" failed!"
@@ -856,9 +859,9 @@ directory_checks_enable_logging () {
   # Check directories and do cleanup work
 
   checkdirs=( "${CONFIG_backup_dir}"/{daily,weekly,monthly,latest,tmp} )
-  [[ "${CONFIG_backup_local_files[@]}" ]] && { checkdirs=( "${checkdirs[@]}" "${CONFIG_backup_dir}/backup_local_files" ); }
-  [[ "${CONFIG_mysql_dump_full_schema}" = 'yes' ]] && { checkdirs=( "${checkdirs[@]}" "${CONFIG_backup_dir}/fullschema" ); }
-  [[ "${CONFIG_mysql_dump_dbstatus}" = 'yes' ]] && { checkdirs=( "${checkdirs[@]}" "${CONFIG_backup_dir}/status" ); }
+  [[ "${CONFIG_backup_local_files[@]}" ]] && { checkdirs+=( "${CONFIG_backup_dir}/backup_local_files" ); }
+  [[ "${CONFIG_mysql_dump_full_schema}" = 'yes' ]] && { checkdirs+=( "${CONFIG_backup_dir}/fullschema" ); }
+  [[ "${CONFIG_mysql_dump_dbstatus}" = 'yes' ]] && { checkdirs+=( "${CONFIG_backup_dir}/status" ); }
 
   tmp_permcheck=0
   printf '# Checking for permissions to write to folders:\n'
@@ -1029,16 +1032,16 @@ check_dependencies () {
     fi
 
   else
-    [[ "x$CONFIG_mysql_dump_compression" = 'xbzip2' ]] && dependencies=("${dependencies[@]}" 'bzip2' )
-    [[ "x$CONFIG_mysql_dump_compression" = 'xgzip' ]] && dependencies=("${dependencies[@]}" 'gzip' )
+    [[ "x$CONFIG_mysql_dump_compression" = 'xbzip2' ]] && dependencies+=('bzip2' )
+    [[ "x$CONFIG_mysql_dump_compression" = 'xgzip' ]] && dependencies+=('gzip' )
   fi    
 
   if [[ "x$CONFIG_mailcontent" = 'xlog' || "x$CONFIG_mailcontent" = 'xquiet' ]]; then
-    dependencies=( "${dependencies[@]}" 'mail' )
+    dependencies+=( 'mail' )
   elif [[ "x$CONFIG_mailcontent" = 'xfiles' ]]; then
-    dependencies=( "${dependencies[@]}" 'mail' )
+    dependencies+=( 'mail' )
     if [[ "x$CONFIG_mail_use_uuencoded_attachments" != 'xyes' ]]; then
-      dependencies=( "${dependencies[@]}" 'mutt' )
+      dependencies+=( 'mutt' )
     fi
   fi
 
@@ -1088,7 +1091,7 @@ parse_databases() {
 
   # -> remove excluded dbs from list
   for exclude in "${CONFIG_db_exclude[@]}"; do
-  for i in "${!alldbnames[@]}"; do if [[ "x${alldbnames[$i]}" = "x${exclude}" ]]; then unset 'alldbnames[i]'; fi; done
+  for i in "${!alldbnames[@]}"; do if [[ "x${alldbnames[$i]}" = "x${exclude}" ]]; then unset -v 'alldbnames[i]'; fi; done
   done
   # <- remove excluded dbs from list
 
@@ -1179,7 +1182,7 @@ check_manifest_entry() {
 #
 parse_manifest() {
   local i n re line line_arr check
-  unset manifest_array; manifest_array=()
+  unset -v manifest_array; manifest_array=()
   local tmp_md5sum
   # array ( filename_1, md5sum_1, id_1[, rel_id_1] ), ... )
   # reserving 4 members for each entry, thus each filename entry in the array has array key 4(n-1)+1
@@ -1191,7 +1194,7 @@ parse_manifest() {
     # ANY CHANGES INSIDE HERE ON THE MANIFEST_FILE HAVE NO IMPACT ON THE LINES WE LOOP OVER; THE sort COMMAND READS THE FILE ENTIRELY AT THE BEGINNING AND PASSES THE OUTPUT TO THE LOOP
     # check if line has expected format, i.e. check against regular expression
     re=$'^[^\t]*\tmd5sum\t[^\t]*\tdiff_id\t[A-Za-z0-9]{8}\trel_id\t(0|[A-Za-z0-9]{8})\tdb\t[^\t]*$'
-    [[ $line =~ $re ]] || { echo "Corrupted line: $line"; manifest_entries_corrupted=( "${manifest_entries_corrupted[@]}" "$1" "$line" ); continue; }
+    [[ $line =~ $re ]] || { echo "Corrupted line: $line"; manifest_entries_corrupted+=( "$1" "$line" ); continue; }
     IFS=$'\t' read -ra line_arr <<< "$line"
 
     # prepare array of the current line
@@ -1227,10 +1230,10 @@ parse_manifest() {
           (( $CONFIG_debug )) && echo -e ">> fname_manifest:\t${manifest_array[i]}\t${manifest_array[i+1]}\n>> fname_line:\t\t${line_arr[0]}\t${line_arr[2]}"
           if [[ "x${line_arr[6]}" != "x0" ]]; then
             if [[ "x${manifest_array[i+3]}" = "x${line_arr[6]}" ]]; then  # parent id is the same; TODO inform user of this predicament and suggest solution 
-              manifest_entries_user_action_required=( "${manifest_entries_user_action_required[@]}" "$1" "${manifest_array[i]}" "The file has an identical copy with the same parent id. If you don't know why it exists, it is safe to remove it." )
+              manifest_entries_user_action_required+=( "$1" "${manifest_array[i]}" "The file has an identical copy with the same parent id. If you don't know why it exists, it is safe to remove it." )
               continue 2
             else
-              manifest_entries_user_action_required=( "${manifest_entries_user_action_required[@]}" "$1" "${manifest_array[i]}" "The file has an identical copy with different parent id. This should not happen. Remove the file, which is not the correct follow-up to the previous differential or master backup." )
+              manifest_entries_user_action_required+=( "$1" "${manifest_array[i]}" "The file has an identical copy with different parent id. This should not happen. Remove the file, which is not the correct follow-up to the previous differential or master backup." )
               continue 2
             fi
           fi
@@ -1368,11 +1371,11 @@ get_latest_manifest_entry_for_db() {
   for ((i=0;$i<"${#manifest_array[@]}";i=$i+$fields)); do
     if (( $2 )); then # latest differential or master backup, i.e. just take the latest one!
       if [[ "x${manifest_array[i+4]}" = "x$1" ]]; then
-        db_array=( "${db_array[@]}" "${manifest_array[i]}" )
+        db_array+=( "${manifest_array[i]}" )
       fi
     else # latest master backup, pid=0
       if [[ "x${manifest_array[i+4]}" = "x$1" && "x${manifest_array[i+3]}" = "x0" ]]; then
-        db_array=( "${db_array[@]}" "${manifest_array[i]}")
+        db_array+=( "${manifest_array[i]}")
       fi
     fi
   done
@@ -1502,7 +1505,7 @@ extended_select() {
       if [[ "x$choice" = 'x*' ]]; then
         unset m
         for ((m=0;m<"${#list[@]}";m++)); do
-          selection=("${selection[@]}" "$m")
+          selection+=("$m")
         done
         continue 2
       elif [[ "x$choice" = 'x-*' ]]; then
@@ -1531,13 +1534,13 @@ extended_select() {
                 for ((k=$num1;k<=$num2;k++)); do
                   (( $k >= $min )) && (( $k <= $max )) || continue
                   if ! in_array $k; then
-                    selection=("${selection[@]}" $k)
+                    selection+=($k)
                   else
                     if (( $op_rm )); then
                       new_array=()
                       for ((m="$((${#selection[@]}-1))";m>=0;m--)); do
                         if [[ "x${selection[m]}" != "x$k" ]]; then
-                          new_array=("${new_array[@]}" "${selection[m]}")
+                          new_array+=("${selection[m]}")
                         fi
                       done
                       declare -a selection=("${new_array[@]}")
@@ -1549,7 +1552,7 @@ extended_select() {
               else
                 (( $string >= $min )) && (( $string <= $max )) || continue
                 if ! in_array "$string"; then
-                  selection=("${selection[@]}" "$string")
+                  selection+=("$string")
                 else
                   if (($op_rm)); then
                     unset m
@@ -1583,14 +1586,14 @@ extended_select() {
               for ((k=$num1;k<=$num2;k++)); do
                 (( $k >= $min )) && (( $k <= $max )) || continue
                 if ! in_array $k; then
-                  selection=("${selection[@]}" $k)
+                  selection+=($k)
                 else
                   if (( $op_rm )); then
                     unset m
                     new_array=()
                     for ((m=0;m<"${#selection[@]}";m++)); do
                       if [[ "x${selection[m]}" != "x$k" ]]; then
-                        new_array=("${new_array[@]}" "${selection[m]}")
+                        new_array+=("${selection[m]}")
                       fi
                     done
                     declare -a selection=("${new_array[@]}")
@@ -1602,14 +1605,14 @@ extended_select() {
             else # it's just a single number
               (( $string >= $min )) && (( $string <= $max )) || { unset op op_rm num1 num2 string; continue; }
               if ! in_array "$string"; then
-                selection=("${selection[@]}" "$string")
+                selection+=("$string")
               else
                 if (($op_rm)); then
                   unset m
                   new_array=()
                   for ((m=0;m<"${#selection[@]}";m++)); do
                     if [[ "x${selection[m]}" != "x$string" ]]; then
-                      new_array=("${new_array[@]}" "${selection[m]}")
+                      new_array+=("${selection[m]}")
                     fi
                   done
                   declare -a selection=("${new_array[@]}")
@@ -1636,7 +1639,7 @@ extended_select() {
   extended_select_return=()
   extended_select_return_id=()
   for i in "${selection[@]}"; do
-    [[ "x$i" != "x$done_id" ]] && { extended_select_return=("${extended_select_return[@]}" "${list[i]}"); extended_select_return_id=("${extended_select_return_id[@]}" "$i"); }
+    [[ "x$i" != "x$done_id" ]] && { extended_select_return+=("${list[i]}"); extended_select_return_id+=("$i"); }
   done
 
 }
@@ -1745,7 +1748,7 @@ method_backup () {
     tmp_flags=$?; var=; 
     if (( $? == 0 )); then
       echo "success!"
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/backup_local_files/bcf_weekly_${datetimestamp}_${date_weekno}.tar" )
+      backupfiles+=( "${CONFIG_backup_dir}/backup_local_files/bcf_weekly_${datetimestamp}_${date_weekno}.tar" )
     else
       let "E |= $E_backup_local_failed"
       echo "failed!"
@@ -1774,7 +1777,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/fullschema/fullschema_monthly_${datetimestamp}_${date_month}.sql${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/fullschema/fullschema_monthly_${datetimestamp}_${date_month}.sql${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/fullschema/fullschema_monthly_${datetimestamp}_${date_month}.sql${suffix}${var}" )
       else
       let "E |= $E_dump_fullschema_failed"
       fi
@@ -1792,7 +1795,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/fullschema/fullschema_weekly_${datetimestamp}_${date_weekno}.sql${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/fullschema/fullschema_weekly_${datetimestamp}_${date_weekno}.sql${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/fullschema/fullschema_weekly_${datetimestamp}_${date_weekno}.sql${suffix}${var}" )
       else
       let "E |= $E_dump_fullschema_failed"
       fi
@@ -1809,7 +1812,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/fullschema/fullschema_daily_${datetimestamp}_${date_day_of_week}.sql${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/fullschema/fullschema_daily_${datetimestamp}_${date_day_of_week}.sql${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/fullschema/fullschema_daily_${datetimestamp}_${date_day_of_week}.sql${suffix}${var}" )
     else
       let "E |= $E_dump_fullschema_failed"
     fi
@@ -1838,7 +1841,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/status/status_monthly_${datetimestamp}_${date_month}.txt${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/status/status_monthly_${datetimestamp}_${date_month}.txt${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/status/status_monthly_${datetimestamp}_${date_month}.txt${suffix}${var}" )
       else
       let "E |= $E_dump_status_failed"
       fi
@@ -1856,7 +1859,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/status/status_weekly_${datetimestamp}_${date_weekno}.txt${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/status/status_weekly_${datetimestamp}_${date_weekno}.txt${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/status/status_weekly_${datetimestamp}_${date_weekno}.txt${suffix}${var}" )
       else
       let "E |= $E_dump_status_failed"
       fi
@@ -1873,7 +1876,7 @@ method_backup () {
       fi
       files_postprocessing "${CONFIG_backup_dir}/status/status_daily_${datetimestamp}_${date_day_of_week}.txt${suffix}"
       tmp_flags=$?; var=; (( $tmp_flags & $flags_files_postprocessing_success_encrypt )) && var=.enc
-      backupfiles=( "${backupfiles[@]}" "${CONFIG_backup_dir}/status/status_daily_${datetimestamp}_${date_day_of_week}.txt${suffix}${var}" )
+      backupfiles+=( "${CONFIG_backup_dir}/status/status_daily_${datetimestamp}_${date_day_of_week}.txt${suffix}${var}" )
     else
       let "E |= $E_dump_status_failed"
     fi
@@ -2044,7 +2047,7 @@ method_list_manifest_entries () {
   parse_configuration  # parse configuration and set variables appropriately
 
   # BEGIN __MAIN
-  unset manifest_files manifest_files_db i db
+  unset -v manifest_files manifest_files_db i db
   while IFS= read -r -d '' file; do
     db="${file#/var/backup/db/@(daily|monthly|weekly|latest)/}";
     db="${db%/Manifest}";
@@ -2072,8 +2075,8 @@ method_list_manifest_entries () {
           list_id=()
           for ((i=0;$i<"${#manifest_array[@]}";i=$i+$fields)); do
           if [[ "${manifest_array[i+3]}" != 0 ]]; then # only add differential backups
-            list=("${list[@]}" "${manifest_array[i]}")
-            list_id=("${list_id[@]}" "${manifest_array[i+3]}") # save rel_id, so we can retrieve the master backup file
+            list+=("${manifest_array[i]}")
+            list_id+=("${manifest_array[i+3]}") # save rel_id, so we can retrieve the master backup file
           fi
           done
           if (( "${#list[@]}" > 0 )); then
@@ -2081,9 +2084,9 @@ method_list_manifest_entries () {
           if (( "${#extended_select_return[@]}" > 0 )); then
             for ((i=0;$i<"${#extended_select_return[@]}";i++)); do
             if get_manifest_entry_by_id "${list_id[${extended_select_return_id[i]}]}"; then
-              files=("${files[@]}" "${extended_select_return[i]}")
-              files_master=("${files_master[@]}" "${manifest_entry[0]}")
-              files_manifest=("${files_manifest[@]}" "$z")
+              files+=("${extended_select_return[i]}")
+              files_master+=("${manifest_entry[0]}")
+              files_manifest+=("$z")
             else
               echo "no found master for id ${list_id[${extended_select_return_id[i]}]}"
             fi
@@ -2123,14 +2126,14 @@ method_list_manifest_entries () {
           declare -a testarray=("${to_rm[@]}")
           if ! in_array "${master%.gz}"; then
             gzip_compression -dc "$master" > "${master%.gz}"
-            to_rm=("${to_rm[@]}" "${master%.gz}")
+            to_rm+=("${master%.gz}")
           fi
           master="${master%.gz}"
           elif (( $master_flags & $filename_flag_bz2 )); then
           declare -a testarray=("${to_rm[@]}")
           if ! in_array "${master%.bz2}"; then
             bzip2_compression -dc "$master" > "${master%.bz2}"
-            to_rm=("${to_rm[@]}" "${master%.bz2}")
+            to_rm+=("${master%.bz2}")
           fi
           master="${master%.bz2}"
           else
@@ -2192,11 +2195,11 @@ method_diff_to_full() {
 
   if (( $diff_flags & $filename_flag_gz )); then
     gzip_compression -dc "$diff" > "${diff%.gz}"
-    to_rm=("${to_rm[@]}" "${diff%.gz}")
+    to_rm+=("${diff%.gz}")
     diff="${diff%.gz}"
   elif (( $diff_flags & $filename_flag_bz2 )); then
     bzip2_compression -dc "$diff" > "${diff%.bz2}"
-    to_rm=("${to_rm[@]}" "${diff%.bz2}")
+    to_rm+=("${diff%.bz2}")
     diff="${diff%.bz2}"
   else
     :
@@ -2204,11 +2207,11 @@ method_diff_to_full() {
 
   if (( $master_flags & $filename_flag_gz )); then
     gzip_compression -dc "$master" > "${master%.gz}"
-    to_rm=("${to_rm[@]}" "${master%.gz}")
+    to_rm+=("${master%.gz}")
     master="${master%.gz}"
   elif (( $master_flags & $filename_flag_bz2 )); then
     bzip2_compression -dc "$master" > "${master%.bz2}"
-    to_rm=("${to_rm[@]}" "${master%.bz2}")
+    to_rm+=("${master%.bz2}")
     master="${master%.bz2}"
   else
     :
