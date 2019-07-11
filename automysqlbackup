@@ -95,6 +95,7 @@ load_default_config() {
   CONFIG_mysql_dump_full_schema='yes'
   CONFIG_mysql_dump_dbstatus='yes'
   CONFIG_mysql_dump_differential='no'
+  CONFIG_datetimestamp=
   CONFIG_backup_local_files=()
   CONFIG_db_names=()
   CONFIG_db_month_names=()
@@ -265,9 +266,14 @@ export -f remove_datetimeinfo
 
 # @info:  Set time and date variables.
 # @args:  (none)
-# @deps:  days_of_month
+# @deps:  days_of_month, parse_configuration
 set_datetime_vars() {
-  datetimestamp=`date +%Y-%m-%d_%Hh%Mm`     # Datestamp e.g 2002-09-21_18h12m
+  if [[ $CONFIG_datetimestamp ]]; then
+    datetimestamp=`date +$CONFIG_datetimestamp 2>/dev/null` # Datestamp format string from CONFIG file
+  fi
+  if [[ -z $datetimestamp ]]; then          # check if CONFIG used incompatible format
+    datetimestamp=`date +%Y-%m-%d_%Hh%Mm`   # Datestamp default format e.g 2002-09-21_18h12m
+  fi
   date_stamp=`date +%Y-%m-%d`               # Datestamp e.g 2002-09-21
   date_day_of_week=`date +%A`               # Day of the week e.g. Monday
   date_dayno_of_week=`date +%u`             # Day number of the week 1 to 7 where 1 represents Monday
@@ -2040,9 +2046,9 @@ method_list_manifest_entries () {
   PATH=${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/local/mysql/bin 
   fields=5 # manifest fields
 
+  parse_configuration # parse configuration and set variables appropriately
   set_datetime_vars
   check_dependencies  # check for required programs
-  parse_configuration  # parse configuration and set variables appropriately
 
   # BEGIN __MAIN
   unset -v manifest_files manifest_files_db i db
