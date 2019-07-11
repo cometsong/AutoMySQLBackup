@@ -17,7 +17,7 @@
 shopt -s extglob
 
 # BEGIN __base
-AMYB_version=3.1
+_version=3.1
 # END __base
 
 # BEGIN _flags
@@ -1675,7 +1675,6 @@ method_backup () {
   export LC_ALL=C
   PROGNAME=`basename $0`
   PATH=${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/local/mysql/bin 
-  version="$AMYB_version"
   fields=5 # manifest fields
 
   directory_checks_enable_logging
@@ -1718,7 +1717,7 @@ method_backup () {
   #  daily_all-databases_DBNAME_2011-08-14_18h12m_7.sql(.enc).{gz,bzip2}
 
   echo "======================================================================"
-  echo "AutoMySQLBackup version ${version}"
+  echo "AutoMySQLBackup version ${_version}"
   echo "fork of original http://sourceforge.net/projects/automysqlbackup/"
   echo 
   echo "Backup of Database Server - ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host}"
@@ -2039,7 +2038,6 @@ method_list_manifest_entries () {
   export LC_ALL=C
   PROGNAME=`basename $0`
   PATH=${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/local/mysql/bin 
-  version=3.0
   fields=5 # manifest fields
 
   set_datetime_vars
@@ -2241,7 +2239,8 @@ do
   c ) echo "Using \"$OPTARG\" as optional config file."; echo; opt_config_file="$OPTARG"; opt_flag_config_file=1;;
   b ) echo "MySQL backup method invoked."; echo;  opt_flag_method_backup=1;;
   l ) echo "List manifest entries."; echo; opt_flag_list_manifest_entries=1;;
-  h ) echo "Usage `basename $0` options -cblh"
+  h ) echo "Application: $(basename ${BASH_SOURCE[0]}) version ${_version}"
+      echo "Usage `basename $0` options -cblh"
       echo -e "-c CONFIG_FILE\tSpecify optional config file."
       echo -e "-b\tUse backup method."
       echo -e "-l\tList manifest entries."
