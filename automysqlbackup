@@ -1089,12 +1089,12 @@ parse_databases() {
   alldbnames=()
   local get_db_names="$MYSQL --batch --skip-column-names -e \"show databases\""
 
-  (( $CONFIG_debug )) && printf "\n    get_db_names: '$get_db_names'\n"
+  #(( $CONFIG_debug )) && printf "\n    get_db_names: '$get_db_names'\n"
   if [[ $BASH_VERSINFO -ge 4 ]]; then
-    (( $CONFIG_debug )) && printf "    running bash v4\n"
+    #(( $CONFIG_debug )) && printf "    running bash v4\n"
     mapfile -t alldbnames < <(eval $get_db_names)
   else
-    (( $CONFIG_debug )) && printf "    running bash v3 or lower\n"
+    #(( $CONFIG_debug )) && printf "    running bash v3 or lower\n"
     local i;i=0;
     while read -r; do alldbnames[i++]="$REPLY"; done < <(eval $get_db_names)
     unset i
@@ -1102,7 +1102,7 @@ parse_databases() {
 
   # mkfifo foo || exit; trap 'rm -f foo' EXIT
 
-  (( $CONFIG_debug )) && printf "    alldbnames= '${alldbnames[*]}'\n"
+  (( $CONFIG_debug )) && printf "DENUG: parse_databases >> alldbnames='${alldbnames[*]}'\n"
   ((! "${#alldbnames[@]}" )) && { let "E |= $E_db_empty"; error_handler; }
 
   # -> remove excluded dbs from list
