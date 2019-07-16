@@ -59,9 +59,11 @@ let "N_backup_local_nofiles=0x20"
 # @info:  Generate mysql* commands per config, store in global vars
 # @deps:  load_default_config, parse_configuration
 mysql_commands() {
-  export MYSQLDUMP="mysqldump --user='${CONFIG_mysql_dump_username}' --password='${CONFIG_mysql_dump_password}' --host='${CONFIG_mysql_dump_host}'";
-  export MYSQLSHOW="mysqlshow --user='${CONFIG_mysql_dump_username}' --password='${CONFIG_mysql_dump_password}' --host='${CONFIG_mysql_dump_host}'";
-  export MYSQL="mysql --user='${CONFIG_mysql_dump_username}' --password='${CONFIG_mysql_dump_password}' --host='${CONFIG_mysql_dump_host}'";
+  MY_Auth="--user=${CONFIG_mysql_dump_username} --password=${CONFIG_mysql_dump_password} --host=${CONFIG_mysql_dump_host} "
+  #(( $CONFIG_debug )) && echo "DEBUG: my_auth >> ${MY_Auth}" 
+  export MYSQLDUMP="mysqldump $MY_Auth";
+  export MYSQLSHOW="mysqlshow $MY_Auth";
+  export MYSQL="mysql $MY_Auth";
 }
 
 # @info:  Default configuration options.
