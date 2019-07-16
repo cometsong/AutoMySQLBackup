@@ -871,11 +871,14 @@ directory_checks_enable_logging () {
   ###################################################################################
   # Check directories and do cleanup work
 
-  checkdirs=( "${CONFIG_backup_dir}"/{daily,weekly,monthly,latest,tmp} )
-  [[ "${CONFIG_backup_local_files[@]}" ]] && { checkdirs+=( "${CONFIG_backup_dir}/backup_local_files" ); }
+  checkdirs=( "${CONFIG_backup_dir}"/{daily,latest,tmp} )
+  [[ "${CONFIG_do_weekly}" -gt 0 ]]                && { checkdirs+=( "${CONFIG_backup_dir}/weekly" ); }
+  [[ "${CONFIG_do_monthly}" -gt 0 ]]               && { checkdirs+=( "${CONFIG_backup_dir}/monthly" ); }
+  [[ "${CONFIG_backup_local_files[@]}" ]]          && { checkdirs+=( "${CONFIG_backup_dir}/backup_local_files" ); }
   [[ "${CONFIG_mysql_dump_full_schema}" = 'yes' ]] && { checkdirs+=( "${CONFIG_backup_dir}/fullschema" ); }
-  [[ "${CONFIG_mysql_dump_dbstatus}" = 'yes' ]] && { checkdirs+=( "${CONFIG_backup_dir}/status" ); }
+  [[ "${CONFIG_mysql_dump_dbstatus}" = 'yes' ]]    && { checkdirs+=( "${CONFIG_backup_dir}/status" ); }
 
+  #(( $CONFIG_debug )) && echo "DEBUG: checkdirs >> ${checkdirs[@]}" 
   tmp_permcheck=0
   printf '# Checking for permissions to write to folders:\n'
 
