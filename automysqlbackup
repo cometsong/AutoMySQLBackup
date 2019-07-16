@@ -664,7 +664,7 @@ process_dbs() {
   }
 
   manifest_file="${CONFIG_backup_dir}/${subfolder}${subsubfolder}/Manifest"
-  fname="${CONFIG_backup_dir}/${subfolder}${subsubfolder}/${prefix}${name}_${datetimestamp}${midfix}${extension}"
+  fname="${CONFIG_backup_dir}/${subfolder}${subsubfolder}/${prefix}${name}-${datetimestamp}${midfix}${extension}"
 
   (( $CONFIG_debug )) && echo "DEBUG: process_dbs >> Setting manifest file to: ${manifest_file}" 
 
