@@ -1435,7 +1435,7 @@ rm_manifest_entry_by_db() {
   return 0
 }
 
-# parameters: manifest_file, filename, parent_id, db
+# @parameters: manifest_file, filename, parent_id, db
 add_manifest_entry() {
   local md5sum
   local id
@@ -2240,53 +2240,39 @@ method_diff_to_full() {
 
 
 # BEGIN __main
+# @info:  evaluate cmd line args if any and invoke methods or show Usage
+main() {
+  NO_ARGS=0
+  E_OPTERROR=85
 
-NO_ARGS=0
-E_OPTERROR=85
+  if (( $# == $NO_ARGS )); then   # Script invoked with no command-line args?
+    echo "Invoking backup method."; echo; method_backup
+  fi
 
-if (( $# == $NO_ARGS )); then   # Script invoked with no command-line args?
-  echo "Invoking backup method."; echo; method_backup
-fi
+  while getopts ":c:blh" Option
+  do
+    case $Option in
+      c ) echo "Using \"$OPTARG\" as optional config file."; echo; opt_config_file="$OPTARG"; opt_flag_config_file=1;;
+      b ) echo "MySQL backup method invoked."; echo;  opt_flag_method_backup=1;;
+      l ) echo "List manifest entries."; echo; opt_flag_list_manifest_entries=1;;
+      h ) echo "Application: $(basename ${BASH_SOURCE[0]}) version ${_version}"
+          echo "Usage `basename $0` options -cblh"
+          echo -e "-c CONFIG_FILE\tSpecify optional config file."
+          echo -e "-b\tUse backup method."
+          echo -e "-l\tList manifest entries."
+          echo -e "-h\tShow this help."
+          exit 0;;
+      * ) echo "Unimplemented option chosen.";;   # Default.
+    esac
+  done
 
-while getopts ":c:blh" Option
-do
-  case $Option in
-  c ) echo "Using \"$OPTARG\" as optional config file."; echo; opt_config_file="$OPTARG"; opt_flag_config_file=1;;
-  b ) echo "MySQL backup method invoked."; echo;  opt_flag_method_backup=1;;
-  l ) echo "List manifest entries."; echo; opt_flag_list_manifest_entries=1;;
-  h ) echo "Application: $(basename ${BASH_SOURCE[0]}) version ${_version}"
-      echo "Usage `basename $0` options -cblh"
-      echo -e "-c CONFIG_FILE\tSpecify optional config file."
-      echo -e "-b\tUse backup method."
-      echo -e "-l\tList manifest entries."
-      echo -e "-h\tShow this help."
-      exit 0;;
-  #n | o ) echo "Scenario #2: option -$Option-   [OPTIND=${OPTIND}]";;
+  (( $opt_flag_method_backup )) && method_backup
+  (( $opt_flag_list_manifest_entries )) && method_list_manifest_entries
 
-  #q ) echo "Scenario #4: option -q-\
-  #    with argument \"$OPTARG\"   [OPTIND=${OPTIND}]";;
-  #  Note that option 'q' must have an associated argument,
-  #+ otherwise it falls through to the default.
-  #r | s ) echo "Scenario #5: option -$Option-";;
-  * ) echo "Unimplemented option chosen.";;   # Default.
-  esac
-done
+  shift $(($OPTIND - 1))
+  #  Decrements the argument pointer so it points to next argument.
+  #  $1 now references the first non-option item supplied on the command-line if one exists.
+}
 
-(( $opt_flag_method_backup )) && method_backup
-(( $opt_flag_list_manifest_entries )) && method_list_manifest_entries
-
-shift $(($OPTIND - 1))
-#  Decrements the argument pointer so it points to next argument.
-#  $1 now references the first non-option item supplied on the command-line
-#+ if one exists.
-
-# For backward compatibility. If no option items are present and only one non-option item is there, we expect it
-# to be the optional config file and invoke the backup method.
-opt_flags=( "${!opt_flag_@}" )  # array of all set variables starting with opt_flag_
-if (( $# == 1 )) && (( ${#opt_flags[@]} == 0 )); then
-  opt_config_file="$1"; opt_flag_config_file=1; method_backup
-elif (( $# == 0 )) && (( ${#opt_flags[@]} == 0 )); then
-  method_backup
-fi
-
+main "$@"
 # END __main
