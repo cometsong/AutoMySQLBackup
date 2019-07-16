@@ -98,6 +98,7 @@ load_default_config() {
   CONFIG_mysql_dump_dbstatus='yes'
   CONFIG_mysql_dump_differential='no'
   CONFIG_datetimestamp=
+  DEFAULT_CONFIG_datetimestamp='%Y-%m-%d_%Hh%Mm'
   CONFIG_backup_local_files=()
   CONFIG_db_names=()
   CONFIG_db_month_names=()
@@ -270,11 +271,9 @@ export -f remove_datetimeinfo
 # @args:  (none)
 # @deps:  days_of_month, parse_configuration
 set_datetime_vars() {
-  if [[ $CONFIG_datetimestamp ]]; then
-    datetimestamp=`date +$CONFIG_datetimestamp 2>/dev/null` # Datestamp format string from CONFIG file
-  fi
-  if [[ -z $datetimestamp ]]; then          # check if CONFIG used incompatible format
-    datetimestamp=`date +%Y-%m-%d_%Hh%Mm`   # Datestamp default format e.g 2002-09-21_18h12m
+  datetimestamp=`date +$CONFIG_datetimestamp 2>/dev/null` # Datestamp format string from CONFIG file
+  if [[ -z $datetimestamp ]]; then                        # check if CONFIG used incompatible format
+    datetimestamp=`date +$DEFAULT_CONFIG_datetimestamp`   # Datestamp default format e.g 2002-09-21_18h12m
   fi
   date_stamp=`date +%Y-%m-%d`               # Datestamp e.g 2002-09-21
   date_day_of_week=`date +%A`               # Day of the week e.g. Monday
@@ -546,6 +545,10 @@ parse_configuration () {
     for i in "${CONFIG_table_exclude[@]}"; do
       opt+=( "--ignore-table=$i" )
     done
+  fi
+
+  if [[ -z ${CONFIG_datetimestamp} ]]; then
+    CONFIG_datetimestamp="$DEFAULT_CONFIG_datetimestamp"
   fi
 }
 
@@ -1700,9 +1703,8 @@ method_backup () {
   parse_databases
 
   # debug output of variables
-  (( $CONFIG_debug )) && { echo; echo "# DEBUG: printing all current variables"; declare -p | egrep -o '.* (CONFIG_[a-z_]*|opt|mysql_opt|opt_dbstatus|opt_fullschema)=.*'; echo; }
+  (( $CONFIG_debug )) && { echo; echo "# DEBUG: printing all current variables"; declare -p | egrep -o '.* (CONFIG_[a-z_]*|opt|mysql_opt|opt_dbstatus|opt_fullschema|datetimestamp|date_[a-z]*|year|month|suffix)=.*'; echo; }
   (( $CONFIG_debug )) && { echo "DEBUG: before pre-backup"; ( IFS=,; echo "DEBUG: CONFIG_db_names '${CONFIG_db_names[*]}'" ); ( IFS=,; echo "DEBUG: CONFIG_db_month_names '${CONFIG_db_month_names[*]}'" );}
-
 
   # END __PREPARE
   #--------------------------------------------------------------------------------------------------------------------------------------
