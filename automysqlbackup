@@ -109,6 +109,7 @@ load_default_config() {
   CONFIG_mail_splitandtar='yes'
   CONFIG_mail_use_uuencoded_attachments='no'
   CONFIG_mail_address='root'
+  CONFIG_keep_log_error_files='no'
   CONFIG_encrypt='no'
   CONFIG_encrypt_password='password0123'
 }
@@ -202,8 +203,9 @@ mail_cleanup () {
     esac
     ###################################################################################
     # Clean up and finish
-    [[ -e "$log_file" ]] && rm -f "$log_file"
-    [[ -e "$log_errfile" ]] && rm -f "$log_errfile"
+    [[ ${CONFIG_keep_log_error_files} != 'yes' ]] \
+      && [[ -e "$log_file" ]] && rm -f "$log_file" \
+      && [[ -e "$log_errfile" ]] && rm -f "$log_errfile"
   fi
 }
 
