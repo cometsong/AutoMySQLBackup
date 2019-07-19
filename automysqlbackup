@@ -1110,7 +1110,7 @@ parse_databases() {
 
   # mkfifo foo || exit; trap 'rm -f foo' EXIT
 
-  (( $CONFIG_debug )) && printf "DENUG: parse_databases >> alldbnames='${alldbnames[*]}'\n"
+  (( $CONFIG_debug )) && printf "\nDEBUG: parse_databases >> alldbnames='${alldbnames[*]}'\n>>>>"
   ((! "${#alldbnames[@]}" )) && { let "E |= $E_db_empty"; error_handler; }
 
   # -> remove excluded dbs from list
