@@ -912,15 +912,19 @@ directory_checks_enable_logging () {
       printf 'exists ... writable? ' 
       if (( $CONFIG_dryrun )); then
         printf 'dry-running. Skipping. Logging to /tmp\n'
-        log_file="/tmp/${CONFIG_mysql_dump_host}-`date +%N`.log"
-        log_errfile="/tmp/ERRORS_${CONFIG_mysql_dump_host}-`date +%N`.log"
+        log_file="/tmp/${CONFIG_mysql_dump_host}-${datetimestamp}.log"
+        [[ "${CONFIG_combine_log_error_files}" == "yes" ]] \
+          && log_errfile="${log_file%.log}.err" \
+          || log_errfile="${log_file}"
         activateIO "$log_file" "$log_errfile"
         tmp_permcheck=1
       else
         if chk_folder_writable "${CONFIG_backup_dir}"; then
           printf 'yes. Proceeding.\n'
-          log_file="${CONFIG_backup_dir}/${CONFIG_mysql_dump_host}-`date +%N`.log"
-          log_errfile="${CONFIG_backup_dir}/ERRORS_${CONFIG_mysql_dump_host}-`date +%N`.log"
+          log_file="${CONFIG_backup_dir}/${CONFIG_mysql_dump_host}-${datetimestamp}.log"
+          [[ "${CONFIG_combine_log_error_files}" == "yes" ]] \
+            && log_errfile="${log_file%.log}.err" \
+            || log_errfile="${log_file}"
           activateIO "$log_file" "$log_errfile"
           tmp_permcheck=1
         else
@@ -938,8 +942,10 @@ directory_checks_enable_logging () {
       else
         if mkdir -p "${CONFIG_backup_dir}" >/dev/null 2>&1; then
           printf 'success.\n'
-          log_file="${CONFIG_backup_dir}/${CONFIG_mysql_dump_host}-`date +%N`.log"
-          log_errfile="${CONFIG_backup_dir}/ERRORS_${CONFIG_mysql_dump_host}-`date +%N`.log"
+          log_file="${CONFIG_backup_dir}/${CONFIG_mysql_dump_host}-${datetimestamp}.log"
+          [[ "${CONFIG_combine_log_error_files}" == "yes" ]] \
+            && log_errfile="${log_file%.log}.err" \
+            || log_errfile="${log_file}"
           activateIO "$log_file" "$log_errfile"
           tmp_permcheck=1
         else
@@ -955,8 +961,10 @@ directory_checks_enable_logging () {
 
     if (( $CONFIG_dryrun )); then
       printf 'dry-running. Skipping. Logging to /tmp\n'
-      log_file="/tmp/${CONFIG_mysql_dump_host}-`date +%N`.log"
-      log_errfile="/tmp/ERRORS_${CONFIG_mysql_dump_host}-`date +%N`.log"
+      log_file="/tmp/${CONFIG_mysql_dump_host}-${datetimestamp}.log"
+      [[ "${CONFIG_combine_log_error_files}" == "yes" ]] \
+        && log_errfile="${log_file%.log}.err" \
+        || log_errfile="${log_file}"
       activateIO "$log_file" "$log_errfile"
     else
       printf 'does not exist. Exiting.\n'
@@ -1693,11 +1701,11 @@ method_backup () {
   PATH=${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/local/mysql/bin 
   fields=5 # manifest fields
 
+  parse_configuration  # parse configuration and set variables appropriately
+  set_datetime_vars
   directory_checks_enable_logging
   cleanup_latest
-  set_datetime_vars
   check_dependencies  # check for required programs
-  parse_configuration  # parse configuration and set variables appropriately
 
 
   # END __STARTUP
